@@ -85,7 +85,7 @@ def addWord():
 		"levelId":request.json['levelId']
 	}
 	apiDB.words.append(newWord)
-	return jsonify({"message": "World added succesfully!", "word":apiDB.words})
+	return jsonify({"message": "Word added succesfully!", "word":apiDB.words})
 
 # Api para editar una palabra por id
 @app.route('/words/<int:wordsId>',methods=['PUT'])
@@ -117,7 +117,7 @@ def getGame():
 
 # Api para consultar una palabra por id
 @app.route('/game/<int:userId>',methods=['GET'])
-def getUserId(userId):
+def getGameId(userId):
 	gameFound = [game for game in apiDB.game if game['userId'] == userId]
 	if (len(gameFound) > 0):	
 		return jsonify({"message": "Game Found!", "game":gameFound})
@@ -137,7 +137,7 @@ def addGame():
 		"date":request.json['date']
 	}
 	apiDB.game.append(newGame)
-	return jsonify({"message": "World added succesfully!", "game":apiDB.game})
+	return jsonify({"message": "Game added succesfully!", "game":apiDB.game})
 
 # Api para editar una partida por id
 @app.route('/game/<int:userId>',methods=['PUT'])
@@ -162,3 +162,52 @@ def dateleGame(userId):
 		apiDB.game.remove(gameFound[0])	
 		return jsonify({"message": "Game Deleted!", "game":apiDB.game})
 	return jsonify({"message":"Game not found"})
+
+############
+# USUARIOS #
+############
+
+# Api para consultar usuarios
+@app.route('/users',methods=['GET'])
+def getUser():
+	return jsonify({"users":apiDB.users, "message":"User's List"})
+
+# Api para consultar un usuario por id
+@app.route('/users/<int:userId>',methods=['GET'])
+def getUserId(userId):
+	userFound = [user for user in apiDB.users if user['id'] == userId]
+	if (len(userFound) > 0):	
+		return jsonify({"message": "User Found!", "user":userFound})
+	return jsonify({"message":"User not found"})
+
+# Api para crear nuevos usuarios
+@app.route('/users',methods=['POST'])
+def addUser():
+	#print(request.json) #Recibe los usuarios
+	newUser = {
+		"id":request.json['id'],
+		"name":request.json['name'],
+		"mail":request.json['mail']
+	}
+	apiDB.users.append(newUser)
+	return jsonify({"message": "User added succesfully!", "user":apiDB.users})
+
+# Api para editar un usuario por id
+@app.route('/users/<int:userId>',methods=['PUT'])
+def editUsers(userId):
+	userFound = [user for user in apiDB.users if user['id'] == userId]
+	if (len(userFound) > 0):
+		userFound[0]['id'] = request.json['id']
+		userFound[0]['name'] = request.json['name']
+		userFound[0]['mail'] = request.json['mail']		
+		return jsonify({"message": "User Updated!", "user": userFound})
+	return jsonify({"message":"User not found"})
+
+# Api para eliminar un usuario por id
+@app.route('/users/<int:userId>',methods=['DELETE'])
+def deleteUser(userId):
+	userFound = [user for user in apiDB.users if user['id'] == userId]
+	if (len(userFound) > 0):	
+		apiDB.users.remove(userFound[0])	
+		return jsonify({"message": "User Deleted!", "user":apiDB.users})
+	return jsonify({"message":"User not found"})
