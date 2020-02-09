@@ -5,8 +5,8 @@ Estructura básica de carpetas en Flask
 **1 -** Clonar repositorio.
 
 ```sh
-    virtualenv venv -p python3
-    venv/bin/pip install flask
+    git clone https://github.com/danielbalzate/flask-projects.git flask-projects
+    cd  flask-projects/my-hanged-rest
 ```
 
 **2 -** Cree un entorno virtual de Python e instale Flask:
