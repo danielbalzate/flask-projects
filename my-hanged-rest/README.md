@@ -1,19 +1,25 @@
-# FlaskSkeleton
-Flask basic folders structure
+# Esqueleto Flask
 
-**1 -** Clone or download repository.
+Estructura básica de carpetas en Flask
 
-**2 -** Create a python virtual environment and install flask:
+**1 -** Clonar repositorio.
 
 ```sh
     virtualenv venv -p python3
     venv/bin/pip install flask
 ```
 
-**3 -** Execute the flask project (run.py must have execute permissions: *chmod +x run.py*):
+**2 -** Cree un entorno virtual de Python e instale Flask:
+
+```sh
+    virtualenv venv -p python3
+    venv/bin/pip install flask
+```
+
+**3 -** Ejecute el proyecto de Flask con: (run.py debe tener permisos de ejecución: _chmod + x run.py_):
 
 ```sh
     ./run.py
 ```
 
-By default this project will open 5001 port, try in your browser with **localhost:5001**
+Por defecto, este proyecto abrirá el puerto 5555, intente en su navegador con **localhost:5555**
