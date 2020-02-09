@@ -7,7 +7,10 @@ from flask import render_template, request, jsonify, send_from_directory, send_f
 import flask
 from app import apiDB
 
+###########
 # NIVELES #
+###########
+
 # Api para consultar todos los niveles
 @app.route('/levels',methods=['GET'])
 def getLevels():
@@ -55,24 +58,27 @@ def deleteLevel(levelsId):
 		return jsonify({"message": "Level Deleted!", "level":apiDB.levels})
 	return jsonify({"message":"Level not found"})
 
+############
 # PALABRAS #
+############
+
 # Api para consultar palabras
 @app.route('/words',methods=['GET'])
 def getWord():
 	return jsonify({"words":apiDB.words, "message":"Word's List"})
 
-# Api para eliminar un nivel por id
+# Api para consultar una palabra por id
 @app.route('/words/<int:wordsId>',methods=['GET'])
 def getWordId(wordsId):
 	wordFound = [word for word in apiDB.words if word['id'] == wordsId]
 	if (len(wordFound) > 0):	
-		return jsonify({"message": "Word Found!", "word":apiDB.words})
+		return jsonify({"message": "Word Found!", "word":wordFound})
 	return jsonify({"message":"Word not found"})
 
-# Api para crear nuevos palabras
+# Api para crear nuevas palabras
 @app.route('/words',methods=['POST'])
 def addWord():
-	#print(request.json) #Recibe los palabras
+	#print(request.json) #Recibe las palabras
 	newWord = {
 		"id":request.json['id'],
 		"word":request.json['word'],
@@ -81,7 +87,7 @@ def addWord():
 	apiDB.words.append(newWord)
 	return jsonify({"message": "World added succesfully!", "word":apiDB.words})
 
-# Api para editar un palabra por id
+# Api para editar una palabra por id
 @app.route('/words/<int:wordsId>',methods=['PUT'])
 def editWords(wordsId):
 	wordFound = [word for word in apiDB.words if word['id'] == wordsId]
@@ -92,7 +98,7 @@ def editWords(wordsId):
 		return jsonify({"message": "Word Updated!", "word": wordFound})
 	return jsonify({"message":"Word not found"})
 
-# Api para eliminar un nivel por id
+# Api para eliminar una palabra por id
 @app.route('/words/<int:wordsId>',methods=['DELETE'])
 def deleteWord(wordsId):
 	wordFound = [word for word in apiDB.words if word['id'] == wordsId]
@@ -100,3 +106,59 @@ def deleteWord(wordsId):
 		apiDB.words.remove(wordFound[0])	
 		return jsonify({"message": "Word Deleted!", "word":apiDB.words})
 	return jsonify({"message":"Word not found"})
+
+############
+# PARTIDAS #
+############
+# Api para consultar partidas
+@app.route('/game',methods=['GET'])
+def getGame():
+	return jsonify({"game":apiDB.game, "message":"Game's List"})
+
+# Api para consultar una palabra por id
+@app.route('/game/<int:userId>',methods=['GET'])
+def getUserId(userId):
+	gameFound = [game for game in apiDB.game if game['userId'] == userId]
+	if (len(gameFound) > 0):	
+		return jsonify({"message": "Game Found!", "game":gameFound})
+	return jsonify({"message":"Game not found"})
+
+# Api para crear nuevas partidas
+@app.route('/game',methods=['POST'])
+def addGame():
+	#print(request.json) #Recibe las partidas
+	newGame = {
+		"userId":request.json['userId'],
+		"wordId":request.json['wordId'],
+		"letters":request.json['letters'],
+		"number-attemps":request.json['number-attemps'],
+		"status":request.json['status'],
+		"score":request.json['score'],
+		"date":request.json['date']
+	}
+	apiDB.game.append(newGame)
+	return jsonify({"message": "World added succesfully!", "game":apiDB.game})
+
+# Api para editar una partida por id
+@app.route('/game/<int:userId>',methods=['PUT'])
+def editGame(userId):
+	gameFound = [game for game in apiDB.game if game['userId'] == userId]
+	if (len(gameFound) > 0):
+		gameFound[0]['userId'] = request.json['userId'],
+		gameFound[0]['wordId'] = request.json['wordId'],
+		gameFound[0]['letters'] = request.json['letters'],
+		gameFound[0]['number-attemps'] = request.json['number-attemps'],
+		gameFound[0]['status'] = request.json['status'],
+		gameFound[0]['score'] = request.json['score'],
+		gameFound[0]['date'] = request.json['date']	
+		return jsonify({"message": "Game Updated!", "game": gameFound})
+	return jsonify({"message":"Game not found"})
+
+# Api para eliminar una partida por id
+@app.route('/game/<int:userId>',methods=['DELETE'])
+def dateleGame(userId):
+	gameFound = [game for game in apiDB.game if game['userId'] == userId]
+	if (len(gameFound) > 0):	
+		apiDB.game.remove(gameFound[0])	
+		return jsonify({"message": "Game Deleted!", "game":apiDB.game})
+	return jsonify({"message":"Game not found"})
