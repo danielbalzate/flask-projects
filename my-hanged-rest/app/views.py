@@ -1,62 +1,113 @@
 # coding: utf-8
 from app import app
-
-import os
+import os, json
 #flask related imports
 from flask import render_template, request, jsonify, send_from_directory, send_file, session, redirect, g
-import flask
-from app import apiDB
+#En su momento se utilizó para hacer todas las api de manera local
+#from app import apiDB
+#Importación mongodb
+from pymongo import MongoClient
 
 ###########
 # NIVELES #
 ###########
 
 # Api para consultar todos los niveles
+client = MongoClient('localhost') 
+db = client['hanged'] # Crear o define db, se crean sin colecciones ni documentos
+colLeves = db['levels'] # Crear o define colección sin documentos
 @app.route('/levels',methods=['GET'])
 def getLevels():
-	return jsonify({"levels":apiDB.levels, "message":"Level's List"})
+	data = {} # Creo una data vacía
+	data['levels'] = [] # Le asigno un valor levels
+	for doc in colLeves.find({}): # Recorro y agrego valores a data
+		data['levels'].append({
+		'name': doc['name'],
+		'attemptScore': doc['attemptScore'],
+		'activate': doc['activate'],
+		})
+	#   print(doc)
+	# print("Data", data)
+	return jsonify({"levels":data['levels'], "message":"Level's List"})
 
 # Api para consultar un nivel por id
 @app.route('/levels/<int:levelsId>',methods=['GET'])
 def getLevelId(levelsId):
-	levelFound = [level for level in apiDB.levels if level['id'] == levelsId]
-	if (len(levelFound) > 0):	
-		return jsonify({"message": "Level Found!", "level":levelFound})
-	return jsonify({"message":"Level not found"})
+	try:
+		data = {} # Creo una data vacía
+		data['levels'] = [] # Le asigno un valor levels
+		docLeves = colLeves.find_one({
+			'attemptScore': levelsId
+		})
+		data['levels'].append({
+			'name': docLeves['name'],
+			'attemptScore': docLeves['attemptScore'],
+			'activate': docLeves['activate'],
+		})
+		return jsonify({"levels":data['levels'],"message":"Level found"})
+	except:
+		return jsonify({"message":"Level not found!"})
+	
 
 # Api para crear nuevos niveles
 @app.route('/levels',methods=['POST'])
 def addLevels():
+	colLeves = db['levels'] # Crear o define colección sin documentos
 	#print(request.json) #Recibe los niveles
-	newLevel = {
-		"id":request.json['id'],
-		"name":request.json['name'],
-		"attemptScore":request.json['attemptScore'],
-		"activate":request.json['activate']
-	}
-	apiDB.levels.append(newLevel)
-	return jsonify({"message": "Level added succesfully!", "level":apiDB.levels})
+	colLeves.insert_one({ # Insertar un documento
+	  "name":request.json['name'],
+  	  "attemptScore":request.json['attemptScore'],
+	  "activate":request.json['activate']
+	})
+	return jsonify({"message": "Level added succesfully!", "level":request.json})
 
 # Api para editar un nivel por id
 @app.route('/levels/<int:levelsId>',methods=['PUT'])
 def editLevels(levelsId):
-	levelFound = [level for level in apiDB.levels if level['id'] == levelsId]
-	if (len(levelFound) > 0):
-		levelFound[0]['id'] = request.json['id']
-		levelFound[0]['name'] = request.json['name']
-		levelFound[0]['attemptScore'] = request.json['attemptScore']
-		levelFound[0]['activate'] = request.json['activate']			
-		return jsonify({"message": "Level Updated!", "level": levelFound})
-	return jsonify({"message":"Level not found"})
+	try:
+		data = {} # Creo una data vacía
+		data['levels'] = [] # Le asigno un valor levels
+		docLeves = colLeves.find_one({
+			'attemptScore': levelsId
+		})
+		data['levels'].append({
+			'name': docLeves['name'],
+			'attemptScore': docLeves['attemptScore'],
+			'activate': docLeves['activate'],
+		})
+		docLeves = colLeves.update_one({ # Editar todas las colecciones cuyo precio sea igual a 80 y le asigna el precio 90
+		    "attemptScore": levelsId
+		},{
+		    '$set': {
+		    	"name":request.json['name'],
+				"attemptScore":request.json['attemptScore'],
+				"activate":request.json['activate']	
+		    }
+		})
+		return jsonify({"levels":request.json,"message":"Level found"})
+	except:
+		return jsonify({"message":"Level not found!"})
 
 # Api para eliminar un nivel por id
 @app.route('/levels/<int:levelsId>',methods=['DELETE'])
 def deleteLevel(levelsId):
-	levelFound = [level for level in apiDB.levels if level['id'] == levelsId]
-	if (len(levelFound) > 0):	
-		apiDB.levels.remove(levelFound[0])	
-		return jsonify({"message": "Level Deleted!", "level":apiDB.levels})
-	return jsonify({"message":"Level not found"})
+	try:
+		data = {} # Creo una data vacía
+		data['levels'] = [] # Le asigno un valor levels
+		docLeves = colLeves.find_one({
+			'attemptScore': levelsId
+		})
+		data['levels'].append({
+			'name': docLeves['name'],
+			'attemptScore': docLeves['attemptScore'],
+			'activate': docLeves['activate'],
+		})
+		colLeves.delete_one({ # Elimina una colección con el precio igual a 20
+		    'attemptScore':levelsId
+		})
+		return jsonify({"message":"Level deleted!"})
+	except:
+		return jsonify({"message":"Level not found!"})
 
 ############
 # PALABRAS #
