@@ -1,21 +1,3 @@
-words=[
-  {
-    "id": 1,
-    "word": "Toro",
-    "levelId": 1
-  },
-  {
-    "id": 2,
-    "word": "Tortura",
-    "levelId": 2
-  },
-  {
-    "id": 3,
-    "word": "Pelicano",
-    "levelId": 3
-  }
-]
-
 game=[
   {
     "userId": 1,

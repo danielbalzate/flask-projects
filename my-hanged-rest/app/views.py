@@ -19,6 +19,7 @@ client = MongoClient('localhost')
 db = client['hanged'] # Crear o define db, se crean sin colecciones ni documentos
 colLeves = db['levels'] # Crear o define colección sin documentos
 colWords = db['words'] # Crear o define colección sin documentos
+colGame = db['game'] # Crear o define colección sin documentos
 @app.route('/levels',methods=['GET'])
 def getLevels():
 	data = {} # Creo una data vacía
@@ -31,7 +32,7 @@ def getLevels():
 		'attemptScore': doc['attemptScore'],
 		'activate': doc['activate'],
 		})
-	#   print(doc)
+	  	# print(doc)
 	#print("Data", doc)
 	return jsonify({"levels":data['levels'], "message":"Level's List"})
 
@@ -74,7 +75,7 @@ def addLevels():
 @app.route('/levels/<string:levelsId>',methods=['PUT'])
 def editLevels(levelsId):
 	try:
-		docLeves = colLeves.update_one({ # Editar todas las colecciones cuyo precio sea igual a 80 y le asigna el precio 90
+		docLeves = colLeves.update_one({
 		    '_id': ObjectId(levelsId)
 		},{
 		    '$set': {
@@ -106,7 +107,7 @@ def deleteLevel(levelsId):
 @app.route('/words',methods=['GET'])
 def getWord():
 	data = {} # Creo una data vacía
-	data['word'] = [] # Le asigno un valor word
+	data['words'] = [] # Le asigno un valor word
 	for doc in colWords.find({}): # Recorro y agrego valores a data
 		idWord = str(doc['_id'])
 		data['word'].append({
@@ -155,7 +156,7 @@ def addWord():
 @app.route('/words/<string:wordsId>',methods=['PUT'])
 def editWords(wordsId):
 	try:
-		docWord = colWords.update_one({ # Editar todas las colecciones cuyo precio sea igual a 80 y le asigna el precio 90
+		docWord = colWords.update_one({
 		    '_id': ObjectId(wordsId)
 		},{
 		    '$set': {
@@ -184,55 +185,98 @@ def deleteWord(wordsId):
 # Api para consultar partidas
 @app.route('/game',methods=['GET'])
 def getGame():
-	return jsonify({"game":apiDB.game, "message":"Game's List"})
+	data = {} # Creo una data vacía
+	data['game'] = [] # Le asigno un valor game
+	for doc in colGame.find({}): # Recorro y agrego valores a data
+		idGame = str(doc['_id'])
+		data['game'].append({
+			'id': idGame,
+			'userId': doc['userId'],
+			'wordId': doc['wordId'],
+			'letters': doc['letters'],
+			'number-attemps': doc['number-attemps'],
+			'status': doc['status'],
+			'score': doc['score'],
+			'date': doc['date']
+		})
+	#print(doc)
+	#print("Data", doc)
+	return jsonify({"games":data['game'], "message":"Game's List"})
 
-# Api para consultar una palabra por id
-@app.route('/game/<int:userId>',methods=['GET'])
-def getGameId(userId):
-	gameFound = [game for game in apiDB.game if game['userId'] == userId]
-	if (len(gameFound) > 0):	
-		return jsonify({"message": "Game Found!", "game":gameFound})
-	return jsonify({"message":"Game not found"})
+# Api para consultar una partida por id
+@app.route('/game/<string:gameId>',methods=['GET'])
+def getGameId(gameId):
+	try:
+		data = {} # Creo una data vacía
+		data['game'] = [] # Le asigno un valor 
+		doc = colGame.find_one({
+			'_id': ObjectId(gameId)
+		})
+		idGame = str(doc['_id'])
+		data['game'].append({
+			'id': idGame,
+			'userId': doc['userId'],
+			'wordId': doc['wordId'],
+			'letters': doc['letters'],
+			'number-attemps': doc['number-attemps'],
+			'status': doc['status'],
+			'score': doc['score'],
+			'date': doc['date']
+		})
+		return jsonify({"games":data['game'],"message":"Game found"})
+	except:
+		return jsonify({"message":"Game not found!"})
 
 # Api para crear nuevas partidas
 @app.route('/game',methods=['POST'])
 def addGame():
-	#print(request.json) #Recibe las partidas
-	newGame = {
-		"userId":request.json['userId'],
-		"wordId":request.json['wordId'],
-		"letters":request.json['letters'],
-		"number-attemps":request.json['number-attemps'],
-		"status":request.json['status'],
-		"score":request.json['score'],
-		"date":request.json['date']
-	}
-	apiDB.game.append(newGame)
-	return jsonify({"message": "Game added succesfully!", "game":apiDB.game})
+	try:
+		colGame = db['game'] # Crear o define colección sin documentos
+		#print(request.json) #Recibe los niveles
+		colGame.insert_one({ # Insertar un documento
+			'userId': request.json['userId'],
+			'wordId': request.json['wordId'],
+			'letters': request.json['letters'],
+			'number-attemps': request.json['number-attemps'],
+			'status': request.json['status'],
+			'score': request.json['score'],
+			'date': request.json['date']
+		})
+		return jsonify({"message": "Game added succesfully!", "game":request.json})
+	except:
+		return jsonify({"message":"Error added Game, validate the fields!"})
 
 # Api para editar una partida por id
-@app.route('/game/<int:userId>',methods=['PUT'])
-def editGame(userId):
-	gameFound = [game for game in apiDB.game if game['userId'] == userId]
-	if (len(gameFound) > 0):
-		gameFound[0]['userId'] = request.json['userId'],
-		gameFound[0]['wordId'] = request.json['wordId'],
-		gameFound[0]['letters'] = request.json['letters'],
-		gameFound[0]['number-attemps'] = request.json['number-attemps'],
-		gameFound[0]['status'] = request.json['status'],
-		gameFound[0]['score'] = request.json['score'],
-		gameFound[0]['date'] = request.json['date']	
-		return jsonify({"message": "Game Updated!", "game": gameFound})
-	return jsonify({"message":"Game not found"})
+@app.route('/game/<string:gameId>',methods=['PUT'])
+def editGame(gameId):
+	try:
+		doc = colGame.update_one({
+		    '_id': ObjectId(gameId)
+		},{
+		    '$set': {
+		    	'userId': request.json['userId'],
+				'wordId': request.json['wordId'],
+				'letters': request.json['letters'],
+				'number-attemps': request.json['number-attemps'],
+				'status': request.json['status'],
+				'score': request.json['score'],
+				'date': request.json['date']
+		    }
+		})
+		return jsonify({"game":request.json,"message": "Game Updated!"})
+	except:
+		return jsonify({"message":"Game not found!"})
 
 # Api para eliminar una partida por id
-@app.route('/game/<int:userId>',methods=['DELETE'])
-def dateleGame(userId):
-	gameFound = [game for game in apiDB.game if game['userId'] == userId]
-	if (len(gameFound) > 0):	
-		apiDB.game.remove(gameFound[0])	
-		return jsonify({"message": "Game Deleted!", "game":apiDB.game})
-	return jsonify({"message":"Game not found"})
+@app.route('/game/<string:gameId>',methods=['DELETE'])
+def dateleGame(gameId):
+	try:
+		colGame.delete_one({
+		    '_id': ObjectId(gameId)
+		})
+		return jsonify({"message": "Game Deleted!"})
+	except (e):
+		return jsonify({"message":"Game not found!"})
 
 ############
 # USUARIOS #

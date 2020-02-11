@@ -25,5 +25,6 @@ for doc in colWords.find({}):
 
 print ("Cantidad doc levels: ",colLeves.count_documents({})) # Contar los documentos drogas
 print ("Cantidad doc users: ",colUsers.count_documents({})) # Contar los documentos usuarios
+print ("Cantidad doc palabras: ",colWords.count_documents({})) # Contar los documentos palabras
 print ("Nombre de todas las DB: ", client.list_database_names()) # Ver las bases de datos
 print ("Nombre de las colecciones en la DB [hanged]: ",db.list_collection_names()) # Ver las colecciones    
