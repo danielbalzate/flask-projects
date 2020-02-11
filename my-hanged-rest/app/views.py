@@ -20,6 +20,7 @@ db = client['hanged'] # Crear o define db, se crean sin colecciones ni documento
 colLeves = db['levels'] # Crear o define colección sin documentos
 colWords = db['words'] # Crear o define colección sin documentos
 colGame = db['game'] # Crear o define colección sin documentos
+colUsers = db['users'] # Crear o define colección sin documentos
 @app.route('/levels',methods=['GET'])
 def getLevels():
 	data = {} # Creo una data vacía
@@ -107,7 +108,7 @@ def deleteLevel(levelsId):
 @app.route('/words',methods=['GET'])
 def getWord():
 	data = {} # Creo una data vacía
-	data['words'] = [] # Le asigno un valor word
+	data['word'] = [] # Le asigno un valor game
 	for doc in colWords.find({}): # Recorro y agrego valores a data
 		idWord = str(doc['_id'])
 		data['word'].append({
@@ -285,44 +286,74 @@ def dateleGame(gameId):
 # Api para consultar usuarios
 @app.route('/users',methods=['GET'])
 def getUser():
-	return jsonify({"users":apiDB.users, "message":"User's List"})
+	data = {} # Creo una data vacía
+	data['user'] = [] # Le asigno un valor game
+	for doc in colUsers.find({}): # Recorro y agrego valores a data
+		idUser = str(doc['_id'])
+		data['user'].append({
+			'id': idUser,
+			'name': doc['name'],
+			'mail': doc['mail']
+		})
+	#print(doc)
+	#print("Data", doc)
+	return jsonify({"users":data['user'], "message":"User's List"})
 
 # Api para consultar un usuario por id
-@app.route('/users/<int:userId>',methods=['GET'])
+@app.route('/users/<string:userId>',methods=['GET'])
 def getUserId(userId):
-	userFound = [user for user in apiDB.users if user['id'] == userId]
-	if (len(userFound) > 0):	
-		return jsonify({"message": "User Found!", "user":userFound})
-	return jsonify({"message":"User not found"})
+	try:
+		data = {} # Creo una data vacía
+		data['user'] = [] # Le asigno un valor 
+		doc = colUsers.find_one({
+			'_id': ObjectId(userId)
+		})
+		idUser = str(doc['_id'])
+		data['user'].append({
+			'id': idUser,
+			'name': doc['name'],
+			'mail': doc['mail']
+		})
+		return jsonify({"users":data['user'],"message":"Word found"})
+	except:
+		return jsonify({"message":"Word not found!"})
 
 # Api para crear nuevos usuarios
 @app.route('/users',methods=['POST'])
 def addUser():
-	#print(request.json) #Recibe los usuarios
-	newUser = {
-		"id":request.json['id'],
-		"name":request.json['name'],
-		"mail":request.json['mail']
-	}
-	apiDB.users.append(newUser)
-	return jsonify({"message": "User added succesfully!", "user":apiDB.users})
+	try:
+		#print(request.json) #Recibe los niveles
+		colUsers.insert_one({ # Insertar un documento
+			'name': request.json['name'],
+			'mail': request.json['mail']
+		})
+		return jsonify({"message": "User added succesfully!", "user":request.json})
+	except:
+		return jsonify({"message":"Error added User, validate the fields!"})
 
 # Api para editar un usuario por id
-@app.route('/users/<int:userId>',methods=['PUT'])
+@app.route('/users/<string:userId>',methods=['PUT'])
 def editUsers(userId):
-	userFound = [user for user in apiDB.users if user['id'] == userId]
-	if (len(userFound) > 0):
-		userFound[0]['id'] = request.json['id']
-		userFound[0]['name'] = request.json['name']
-		userFound[0]['mail'] = request.json['mail']		
-		return jsonify({"message": "User Updated!", "user": userFound})
-	return jsonify({"message":"User not found"})
+	try:
+		doc = colUsers.update_one({
+		    '_id': ObjectId(userId)
+		},{
+		    '$set': {
+		    	"name":request.json['name'],
+				"mail":request.json['mail']
+		    }
+		})
+		return jsonify({"user":request.json,"message": "User Updated!"})
+	except:
+		return jsonify({"message":"User not found!"})
 
 # Api para eliminar un usuario por id
-@app.route('/users/<int:userId>',methods=['DELETE'])
+@app.route('/users/<string:userId>',methods=['DELETE'])
 def deleteUser(userId):
-	userFound = [user for user in apiDB.users if user['id'] == userId]
-	if (len(userFound) > 0):	
-		apiDB.users.remove(userFound[0])	
-		return jsonify({"message": "User Deleted!", "user":apiDB.users})
-	return jsonify({"message":"User not found"})
+	try:
+		colUsers.delete_one({
+		    '_id': ObjectId(userId)
+		})
+		return jsonify({"message": "User Deleted!"})
+	except (e):
+		return jsonify({"message":"User not found!"})
