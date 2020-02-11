@@ -4,9 +4,11 @@ import os, json
 #flask related imports
 from flask import render_template, request, jsonify, send_from_directory, send_file, session, redirect, g
 #En su momento se utilizó para hacer todas las api de manera local
-#from app import apiDB
+from app import apiDB
 #Importación mongodb
 from pymongo import MongoClient
+from bson.objectid import ObjectId
+
 
 ###########
 # NIVELES #
@@ -21,23 +23,25 @@ def getLevels():
 	data = {} # Creo una data vacía
 	data['levels'] = [] # Le asigno un valor levels
 	for doc in colLeves.find({}): # Recorro y agrego valores a data
+		idLevel = str(doc['_id'])
 		data['levels'].append({
+		'id': idLevel,
 		'name': doc['name'],
 		'attemptScore': doc['attemptScore'],
 		'activate': doc['activate'],
 		})
 	#   print(doc)
-	# print("Data", data)
+	print("Data", doc)
 	return jsonify({"levels":data['levels'], "message":"Level's List"})
 
 # Api para consultar un nivel por id
-@app.route('/levels/<int:levelsId>',methods=['GET'])
+@app.route('/levels/<string:levelsId>',methods=['GET'])
 def getLevelId(levelsId):
 	try:
 		data = {} # Creo una data vacía
-		data['levels'] = [] # Le asigno un valor levels
+		data['levels'] = [] # Le asigno un valor 
 		docLeves = colLeves.find_one({
-			'attemptScore': levelsId
+			'_id': ObjectId(levelsId)
 		})
 		data['levels'].append({
 			'name': docLeves['name'],
@@ -84,7 +88,7 @@ def editLevels(levelsId):
 				"activate":request.json['activate']	
 		    }
 		})
-		return jsonify({"levels":request.json,"message":"Level found"})
+		return jsonify({"levels":request.json,"message": "Level Updated!"})
 	except:
 		return jsonify({"message":"Level not found!"})
 
@@ -105,7 +109,7 @@ def deleteLevel(levelsId):
 		colLeves.delete_one({ # Elimina una colección con el precio igual a 20
 		    'attemptScore':levelsId
 		})
-		return jsonify({"message":"Level deleted!"})
+		return jsonify({"message": "Level Deleted!"})
 	except:
 		return jsonify({"message":"Level not found!"})
 
