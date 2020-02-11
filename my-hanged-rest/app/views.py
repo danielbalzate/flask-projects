@@ -4,7 +4,7 @@ import os, json
 #flask related imports
 from flask import render_template, request, jsonify, send_from_directory, send_file, session, redirect, g
 #En su momento se utilizó para hacer todas las api de manera local
-from app import apiDB
+#from app import apiDB
 #Importación mongodb
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -18,6 +18,7 @@ from bson.objectid import ObjectId
 client = MongoClient('localhost') 
 db = client['hanged'] # Crear o define db, se crean sin colecciones ni documentos
 colLeves = db['levels'] # Crear o define colección sin documentos
+colWords = db['words'] # Crear o define colección sin documentos
 @app.route('/levels',methods=['GET'])
 def getLevels():
 	data = {} # Creo una data vacía
@@ -31,7 +32,7 @@ def getLevels():
 		'activate': doc['activate'],
 		})
 	#   print(doc)
-	print("Data", doc)
+	#print("Data", doc)
 	return jsonify({"levels":data['levels'], "message":"Level's List"})
 
 # Api para consultar un nivel por id
@@ -43,7 +44,9 @@ def getLevelId(levelsId):
 		docLeves = colLeves.find_one({
 			'_id': ObjectId(levelsId)
 		})
+		idLevel = str(doc['_id'])
 		data['levels'].append({
+			'id': idLevel,
 			'name': docLeves['name'],
 			'attemptScore': docLeves['attemptScore'],
 			'activate': docLeves['activate'],
@@ -56,31 +59,23 @@ def getLevelId(levelsId):
 # Api para crear nuevos niveles
 @app.route('/levels',methods=['POST'])
 def addLevels():
-	colLeves = db['levels'] # Crear o define colección sin documentos
-	#print(request.json) #Recibe los niveles
-	colLeves.insert_one({ # Insertar un documento
-	  "name":request.json['name'],
-  	  "attemptScore":request.json['attemptScore'],
-	  "activate":request.json['activate']
-	})
-	return jsonify({"message": "Level added succesfully!", "level":request.json})
-
+	try:
+		colLeves = db['levels'] # Crear o define colección sin documentos
+		#print(request.json) #Recibe los niveles
+		colLeves.insert_one({ # Insertar un documento
+		"name":request.json['name'],
+		"attemptScore":request.json['attemptScore'],
+		"activate":request.json['activate']
+		})
+		return jsonify({"message": "Level added succesfully!", "level":request.json})
+	except:
+		return jsonify({"message":"Error added level, validate the fields!"})
 # Api para editar un nivel por id
-@app.route('/levels/<int:levelsId>',methods=['PUT'])
+@app.route('/levels/<string:levelsId>',methods=['PUT'])
 def editLevels(levelsId):
 	try:
-		data = {} # Creo una data vacía
-		data['levels'] = [] # Le asigno un valor levels
-		docLeves = colLeves.find_one({
-			'attemptScore': levelsId
-		})
-		data['levels'].append({
-			'name': docLeves['name'],
-			'attemptScore': docLeves['attemptScore'],
-			'activate': docLeves['activate'],
-		})
 		docLeves = colLeves.update_one({ # Editar todas las colecciones cuyo precio sea igual a 80 y le asigna el precio 90
-		    "attemptScore": levelsId
+		    '_id': ObjectId(levelsId)
 		},{
 		    '$set': {
 		    	"name":request.json['name'],
@@ -93,24 +88,14 @@ def editLevels(levelsId):
 		return jsonify({"message":"Level not found!"})
 
 # Api para eliminar un nivel por id
-@app.route('/levels/<int:levelsId>',methods=['DELETE'])
+@app.route('/levels/<string:levelsId>',methods=['DELETE'])
 def deleteLevel(levelsId):
 	try:
-		data = {} # Creo una data vacía
-		data['levels'] = [] # Le asigno un valor levels
-		docLeves = colLeves.find_one({
-			'attemptScore': levelsId
-		})
-		data['levels'].append({
-			'name': docLeves['name'],
-			'attemptScore': docLeves['attemptScore'],
-			'activate': docLeves['activate'],
-		})
-		colLeves.delete_one({ # Elimina una colección con el precio igual a 20
-		    'attemptScore':levelsId
+		colLeves.delete_one({
+		    '_id': ObjectId(levelsId)
 		})
 		return jsonify({"message": "Level Deleted!"})
-	except:
+	except (e):
 		return jsonify({"message":"Level not found!"})
 
 ############
@@ -120,47 +105,78 @@ def deleteLevel(levelsId):
 # Api para consultar palabras
 @app.route('/words',methods=['GET'])
 def getWord():
-	return jsonify({"words":apiDB.words, "message":"Word's List"})
+	data = {} # Creo una data vacía
+	data['word'] = [] # Le asigno un valor word
+	for doc in colWords.find({}): # Recorro y agrego valores a data
+		idWord = str(doc['_id'])
+		data['word'].append({
+			'id': idWord,
+			'word': doc['word'],
+			'levelWord': doc['levelWord']
+		})
+	#print(doc)
+	#print("Data", doc)
+	return jsonify({"words":data['word'], "message":"Word's List"})
 
 # Api para consultar una palabra por id
-@app.route('/words/<int:wordsId>',methods=['GET'])
+@app.route('/words/<string:wordsId>',methods=['GET'])
 def getWordId(wordsId):
-	wordFound = [word for word in apiDB.words if word['id'] == wordsId]
-	if (len(wordFound) > 0):	
-		return jsonify({"message": "Word Found!", "word":wordFound})
-	return jsonify({"message":"Word not found"})
+	try:
+		data = {} # Creo una data vacía
+		data['word'] = [] # Le asigno un valor 
+		docWord = colWords.find_one({
+			'_id': ObjectId(wordsId)
+		})
+		idWord = str(docWord['_id'])
+		data['word'].append({
+			'id': idWord,
+			'word': docWord['word'],
+			'levelWord': docWord['levelWord']
+		})
+		return jsonify({"word":data['word'],"message":"Word found"})
+	except:
+		return jsonify({"message":"Word not found!"})
 
 # Api para crear nuevas palabras
 @app.route('/words',methods=['POST'])
 def addWord():
-	#print(request.json) #Recibe las palabras
-	newWord = {
-		"id":request.json['id'],
+	try:
+		colWords = db['words'] # Crear o define colección sin documentos
+		#print(request.json) #Recibe los niveles
+		colWords.insert_one({ # Insertar un documento
 		"word":request.json['word'],
-		"levelId":request.json['levelId']
-	}
-	apiDB.words.append(newWord)
-	return jsonify({"message": "Word added succesfully!", "word":apiDB.words})
+		"levelWord":request.json['levelWord']
+		})
+		return jsonify({"message": "Word added succesfully!", "word":request.json})
+	except:
+		return jsonify({"message":"Error added word, validate the fields!"})
 
 # Api para editar una palabra por id
-@app.route('/words/<int:wordsId>',methods=['PUT'])
+@app.route('/words/<string:wordsId>',methods=['PUT'])
 def editWords(wordsId):
-	wordFound = [word for word in apiDB.words if word['id'] == wordsId]
-	if (len(wordFound) > 0):
-		wordFound[0]['id'] = request.json['id']
-		wordFound[0]['word'] = request.json['word']
-		wordFound[0]['levelId'] = request.json['levelId']		
-		return jsonify({"message": "Word Updated!", "word": wordFound})
-	return jsonify({"message":"Word not found"})
+	try:
+		docWord = colWords.update_one({ # Editar todas las colecciones cuyo precio sea igual a 80 y le asigna el precio 90
+		    '_id': ObjectId(wordsId)
+		},{
+		    '$set': {
+		    	"word":request.json['word'],
+				"levelWord":request.json['levelWord']
+		    }
+		})
+		return jsonify({"word":request.json,"message": "Word Updated!"})
+	except:
+		return jsonify({"message":"Word not found!"})
 
 # Api para eliminar una palabra por id
-@app.route('/words/<int:wordsId>',methods=['DELETE'])
+@app.route('/words/<string:wordsId>',methods=['DELETE'])
 def deleteWord(wordsId):
-	wordFound = [word for word in apiDB.words if word['id'] == wordsId]
-	if (len(wordFound) > 0):	
-		apiDB.words.remove(wordFound[0])	
-		return jsonify({"message": "Word Deleted!", "word":apiDB.words})
-	return jsonify({"message":"Word not found"})
+	try:
+		colWords.delete_one({
+		    '_id': ObjectId(wordsId)
+		})
+		return jsonify({"message": "Word Deleted!"})
+	except (e):
+		return jsonify({"message":"Word not found!"})
 
 ############
 # PARTIDAS #

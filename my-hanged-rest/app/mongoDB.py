@@ -8,12 +8,10 @@ client = MongoClient('localhost')
 db = client['hanged'] # Crear o define db, se crean sin colecciones ni documentos
 colLeves = db['levels'] # Crear o define colección sin documentos
 colUsers = db['users'] # Crear o define colección sin documentos
+colWords = db['words'] # Crear o define colección sin documentos
 
 # Recorrer los documentos
-id = '5e40e0b576a2daaa56882cf2'
-for doc in colLeves.find({
-     '_id': ObjectId(id)
-}):
+for doc in colWords.find({}):
   print(doc)
 
 # Recorrer los documentos y muestra las drugs con un precio mayor a 20
