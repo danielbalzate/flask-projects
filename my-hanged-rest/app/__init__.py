@@ -12,3 +12,6 @@ app.config.from_pyfile('../config.py')
 appname = 'My app name'
 
 from app import views
+from app import users
+from app import login
+

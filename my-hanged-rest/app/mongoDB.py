@@ -11,7 +11,7 @@ colUsers = db['users'] # Crear o define colección sin documentos
 colWords = db['words'] # Crear o define colección sin documentos
 
 # Recorrer los documentos
-for doc in colWords.find({}):
+for doc in colUsers.find({}):
   print(doc)
 
 # Recorrer los documentos y muestra las drugs con un precio mayor a 20
